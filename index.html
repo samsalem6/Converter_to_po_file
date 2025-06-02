@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to PO File Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        h2 { color: #007cba; }
+        .btn { background: #007cba; color: #fff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .btn:disabled { background: #ccc; }
+        #result, #messages { margin-top: 20px; }
+        .drag-area { border: 2px dashed #007cba; border-radius: 5px; padding: 30px; text-align: center; color: #007cba; background: #f0f8ff; margin-bottom: 20px; cursor: pointer; }
+        .drag-area.dragover { background: #e0f0ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>CSV to PO File Converter</h2>
+        <p>Upload your translation CSV file to generate a PO file for CakePHP localization.</p>
+        <div class="drag-area" id="drag-area">Drag & Drop CSV file here or click to select</div>
+        <input type="file" id="csvFileInput" accept=".csv,.xlsx" style="display:none;" />
+        <select id="languageSelect" style="margin-top:10px;">
+            <option value="it">Italian</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+            <option value="en">English</option>
+            <option value="pt">Portuguese</option>
+        </select>
+        <button class="btn" id="processBtn" disabled>Process Translation File</button>
+        <button class="btn" id="downloadBtn" style="display:none;">Download PO File</button>
+        <div id="messages"></div>
+        <div id="result"></div>
+        <div style="margin-top: 30px; padding: 15px; background: #f0f8ff; border-radius: 5px;">
+            <h3>Expected CSV Format:</h3>
+            <p>Your CSV file should have two columns:</p>
+            <ul>
+                <li><strong>Column 1:</strong> English text (msgid)</li>
+                <li><strong>Column 2:</strong> Translation (msgstr)</li>
+            </ul>
+            <p><strong>Example:</strong></p>
+            <pre style="background: white; padding: 10px; border-radius: 3px;">English,Italian
+"Plan your perfect adventure","Pianifica la tua prossima avventura"
+"Welcome","Benvenuto"</pre>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="converter.js"></script>
+</body>
+</html>
