@@ -70,12 +70,12 @@ async function processFile() {
 
 // Utility: Map language codes to names
 const languageMap = {
+    en: 'English',
     it: 'Italian',
     fr: 'French',
     de: 'German',
     es: 'Spanish',
-    pt: 'Portuguese',
-    en: 'English'
+    pt: 'Portuguese'
 };
 
 let parsedTranslations = [];
@@ -101,12 +101,44 @@ function handleFile(file) {
     const fileName = file.name.toLowerCase();
     if (fileName.endsWith('.csv')) {
         showMessage('Parsing CSV file...');
-        Papa.parse(file, {
+        const config = {
             header: true,
             skipEmptyLines: true,
+            dynamicTyping: false,
+            transformHeader: h => h.trim().replace(/^\uFEFF/, ''), // Remove BOM and trim
             complete: function(results) {
                 if (results.errors.length) {
-                    showMessage('CSV parsing error: ' + results.errors[0].message, 'error');
+                    // Try fallback: auto-detect delimiter
+                    Papa.parse(file, {
+                        header: true,
+                        skipEmptyLines: true,
+                        dynamicTyping: false,
+                        transformHeader: h => h.trim().replace(/^\uFEFF/, ''),
+                        delimiter: '', // Let PapaParse auto-detect
+                        complete: function(fallbackResults) {
+                            if (fallbackResults.errors.length) {
+                                console.log(fallbackResults);
+                                showMessage('CSV parsing error: ' + fallbackResults.errors[0].message + '<br>\nPlease check your file for extra commas, missing quotes, or inconsistent columns.', 'error');
+                                return;
+                            }
+                            if (!fallbackResults.data || fallbackResults.data.length === 0) {
+                                showMessage('CSV file is empty or invalid.', 'error');
+                                return;
+                            }
+                            const firstRow = fallbackResults.data[0];
+                            const keys = Object.keys(firstRow);
+                            if (keys.length < 2) {
+                                showMessage('CSV must have at least two columns: English and Translation.', 'error');
+                                return;
+                            }
+                            parsedTranslations = fallbackResults.data.map(row => ({
+                                english: row[keys[0]],
+                                translation: row[keys[1]]
+                            })).filter(t => t.english && t.translation);
+                            showMessage('CSV parsed successfully. Ready to generate PO file.', 'success');
+                            document.getElementById('processBtn').disabled = false;
+                        }
+                    });
                     return;
                 }
                 if (!results.data || results.data.length === 0) {
@@ -123,11 +155,12 @@ function handleFile(file) {
                 parsedTranslations = results.data.map(row => ({
                     english: row[keys[0]],
                     translation: row[keys[1]]
-                }));
+                })).filter(t => t.english && t.translation);
                 showMessage('CSV parsed successfully. Ready to generate PO file.', 'success');
                 document.getElementById('processBtn').disabled = false;
             }
-        });
+        };
+        Papa.parse(file, config);
     } else if (fileName.endsWith('.xlsx')) {
         showMessage('Parsing Excel file...');
         const reader = new FileReader();
@@ -164,8 +197,8 @@ function handleFile(file) {
 function createPoFile(translations, langCode) {
     let po = `# ${languageMap[langCode] || langCode} Translation File\n# Generated automatically\nmsgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n"Language: ${langCode}\\n"\n"MIME-Version: 1.0\\n"\n"Content-Transfer-Encoding: 8bit\\n"\n\n`;
     translations.forEach(t => {
-        po += `msgid "${(t.english || '').replace(/"/g, '\"')}"\n`;
-        po += `msgstr "${(t.translation || '').replace(/"/g, '\"')}"\n\n`;
+        po += `msgid "${(t.english || '').replace(/"/g, '\"').replace(/\r?\n|\r/g, ' ')}"\n`;
+        po += `msgstr "${(t.translation || '').replace(/"/g, '\"').replace(/\r?\n|\r/g, ' ')}"\n\n`;
     });
     return po;
 }
