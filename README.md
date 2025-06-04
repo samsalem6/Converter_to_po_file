@@ -1,4 +1,4 @@
-# CSV to PO File Converter
+# CSV and XLSX to PO File Converter
 
 A simple, user-friendly web application to convert translation CSV or Excel files into PO files for localization (e.g., CakePHP, gettext, etc.).
 
